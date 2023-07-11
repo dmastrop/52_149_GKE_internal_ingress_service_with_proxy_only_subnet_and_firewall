@@ -1,0 +1,57 @@
+This setup for an internal ingress service actually requires a proxy-only-subnet and a firewall rule to allow traffic from that proxy-only-subnet to the backend targets.
+
+This is discussed in a post that I made here
+https://www.udemy.com/course/gcp-google-kubernetes-engine-gke-with-devops/learn/lecture/35192906#questions/20105432
+
+
+
+
+
+The complete references for this issue are below
+
+https://cloud.google.com/knowledge/kb/unable-to-create-internal-http-load-balancer-proxy-only-subnet-issue-000004690
+
+https://cloud.google.com/load-balancing/docs/proxy-only-subnets#console
+
+https://cloud.google.com/load-balancing/docs/l7-internal
+
+https://cloud.google.com/load-balancing/docs/l7-internal/setting-up-l7-internal
+
+https://cloud.google.com/firewall/docs/firewalls
+
+https://cloud.google.com/load-balancing/docs/tcp/internal-proxy#firewall_rules
+
+https://cloud.google.com/load-balancing/docs/l7-internal#firewall_rules
+
+
+I suspected that the last issue (curl failing) was due to a backend firewall issue and that is the case. In reviewing the documentation a firewall rule must allow connections from the proxy-only-subnet to the backend.
+"You must configure a firewall rule for your backends to accept connections from the proxy-only subnet."
+this url describes how to set up the backend firewall rules.
+
+https://cloud.google.com/load-balancing/docs/l7-internal/setting-up-l7-internal
+
+"1. A firewall rule that permits proxy-only subnet traffic flows in your network. This means adding one rule that allows TCP port 80, 443, and 8080 traffic from 10.129.0.0/23 (the range of the proxy-only subnet in this example). Another firewall rule for the health check probes."
+
+So when creating the firewall rule simply use the source as the proxy-only-subnet that one has configured, and destination targets will be "all instances" and then TCP 80,8080, and 443
+I did not have to create the healthcheck firewall rule (I think that one is created for all targets by default)
+
+
+
+I retested this from scratch and it came up quickly and works for all 3 apps
+
+~ $ hostname
+curl-pod
+~ $ curl http://10.128.0.40/app1/index.html
+<!DOCTYPE html>
+<html>
+<body style="background-color:rgb(228, 250, 210);">
+<h1>Welcome to Stack Simplify</h1>
+<p>Application Name: App1</p>
+</body>
+</html>~ $
+
+
+  So 
+1. Create the proxy-only-subnet
+2. Create the firewall rule above
+

@@ -1,0 +1,78 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  #name: ingress-cpr
+  name: ingress-internal-lb-1
+  annotations:
+    # External Load Balancer  
+    # google based ingress service
+    #kubernetes.io/ingress.class: "gce"  
+
+    # If the class annotation is not specified it defaults to "gce".
+    # gce: external load balancer (http)
+    # gce-internal: internal load balancer  (http)
+    # Internal Load Balancer
+    kubernetes.io/ingress.class: "gce-internal"
+
+spec: 
+# spec: has defaultBackend and rules:
+# https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#ingressspec-v1-networking-k8s-io
+  defaultBackend:
+  # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#ingressbackend-v1-networking-k8s-io
+    service:
+      name: app3-nginx-nodeport-service
+      port:
+        number: 80                            
+  rules:
+  # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#ingressrule-v1-networking-k8s-io
+    - http:
+    # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#httpingressrulevalue-v1-networking-k8s-io
+        paths:
+        # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#httpingresspath-v1-networking-k8s-io           
+          - path: /app1
+            pathType: Prefix
+            # https://kubernetes.io/docs/concepts/services-networking/ingress/#path-types
+            # see notes below. The link above has a lot of examples on the pathTypes
+            # financial applications should use Exact. For our use case Prefix is preferable.
+            backend:
+              service:
+                name: app1-nginx-nodeport-service
+                # this must be the same service as defined in app1 deployment service yaml.
+                port: 
+                  number: 80
+          - path: /app2
+            pathType: Prefix
+            backend:
+            # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#ingressbackend-v1-networking-k8s-io
+              service:
+              # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#ingressservicebackend-v1-networking-k8s-io
+                name: app2-nginx-nodeport-service
+                # this must be teh same service as defined in the app2 deployment service yaml.
+                port: 
+                # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#servicebackendport-v1-networking-k8s-io
+                  number: 80
+# this root path / is not necessary if we have the defaultBackend: as defined above
+# the default will take care of / as well as any other non- /app1 or /app2 urls.                  
+#          - path: /
+#            pathType: Prefix
+#            backend:
+#              service:
+#                name: app3-nginx-nodeport-service
+#                port: 
+#                  number: 80     
+
+
+# Path types notes:
+#ImplementationSpecific: With this path type, matching is up to the IngressClass. 
+#Implementations can treat this as a separate pathType or treat it identically to Prefix or Exact path types.
+
+#Exact: Matches the URL path exactly and with case sensitivity.
+
+#Prefix: Matches based on a URL path prefix split by /. 
+#Matching is case sensitive and done on a path element by element basis. 
+#A path element refers to the list of labels in the path split by the / separator. 
+#A request is a match for path p if every p is an element-wise prefix of p of the request path.
+             
+
+    
+    
