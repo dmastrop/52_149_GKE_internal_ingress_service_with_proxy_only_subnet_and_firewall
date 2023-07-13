@@ -1,3 +1,5 @@
+Proxy-only-subnet for internal ingress service in k8s
+
 This setup for an internal ingress service actually requires a proxy-only-subnet and a firewall rule to allow traffic from that proxy-only-subnet to the backend targets.
 
 This is discussed in a post that I made here
